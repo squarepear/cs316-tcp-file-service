@@ -1,12 +1,13 @@
 package cx.pear.tcpfileservice;
 
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 public class Server {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception{
         if (args.length != 1) {
             System.out.println("WHAT DO YOU THINK YOU ARE DOING?");
             return;
@@ -22,8 +23,22 @@ public class Server {
                 SocketChannel serveChannel = welcomeChannel.accept();
 
                 ByteBuffer request = ByteBuffer.allocate(1024);
+                int bytesRead = serveChannel.read(request);
 
-                String command = "C";
+                request.flip();
+
+                byte [] clientQueryArray = new byte[bytesRead];
+                request.get(clientQueryArray);
+
+                String clientQuery = new String(clientQueryArray);
+                System.out.println(clientQuery);
+
+                ByteBuffer replyBuffer = ByteBuffer.wrap(clientQueryArray);
+                serveChannel.write(replyBuffer);
+
+                serveChannel.close();
+                //receiveMessage(port);
+                String command = clientQuery;
                 switch (command) {
                     case "C": // Create
                         uploadFile(serveChannel, request);
@@ -68,4 +83,15 @@ public class Server {
     private static void listFiles(SocketChannel serveChannel, ByteBuffer request) {
         System.out.println("List");
     }
+
+//    private static void receiveMessage(int port) throws Exception {
+//        System.out.println("At least starting");
+//        DatagramSocket socket = new DatagramSocket(port);
+//        DatagramPacket clientRequest = new DatagramPacket(new byte[1024], 1024);
+//        socket.receive(clientRequest);
+//        System.out.println("Received");
+//        byte[] content = Arrays.copyOf(clientRequest.getData(), clientRequest.getLength());
+//        String clientMessage = new String(content);
+//        System.out.println(clientMessage);
+//    }
 }
