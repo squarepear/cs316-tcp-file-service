@@ -70,19 +70,27 @@ public class Client {
     }
 
     private static void uploadFile(InetSocketAddress address) {
-        System.out.println(Arrays.toString(sendRequest(address, ByteBuffer.wrap("C".getBytes()))));
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap("C".getBytes()));
+
+        System.out.println(Arrays.toString(bytes));
     }
 
     private static void downloadFile(InetSocketAddress address) {
-        System.out.println(Arrays.toString(sendRequest(address, ByteBuffer.wrap("R".getBytes()))));
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap("R".getBytes()));
+
+        System.out.println(Arrays.toString(bytes));
     }
 
     private static void renameFile(InetSocketAddress address) {
-        System.out.println(Arrays.toString(sendRequest(address, ByteBuffer.wrap("U".getBytes()))));
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap("U".getBytes()));
+
+        System.out.println(Arrays.toString(bytes));
     }
 
     private static void deleteFile(InetSocketAddress address) {
-        System.out.println(Arrays.toString(sendRequest(address, ByteBuffer.wrap("D".getBytes()))));
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap("D".getBytes()));
+
+        System.out.println(Arrays.toString(bytes));
     }
 
     private static void listFiles(InetSocketAddress address) {
