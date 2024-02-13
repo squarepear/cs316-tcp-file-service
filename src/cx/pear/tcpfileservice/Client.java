@@ -88,9 +88,27 @@ public class Client {
     }
 
     private static void deleteFile(InetSocketAddress address) {
-        byte[] bytes = sendRequest(address, ByteBuffer.wrap("D".getBytes()));
+        System.out.print("Enter name of file to delete: ");
 
-        System.out.println(Arrays.toString(bytes));
+        Scanner keyboard = new Scanner(System.in);
+        String fileName = keyboard.nextLine().toLowerCase();
+
+
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap(("D" + fileName).getBytes()));
+
+        char response = (char) bytes[0];
+
+        switch (response) {
+            case 'S':
+                System.out.println("File successfully deleted!");
+                break;
+            case 'F':
+                System.out.println("File not deleted...");
+                break;
+            default:
+                System.out.println("Server error...");
+                break;
+        }
     }
 
     private static void listFiles(InetSocketAddress address) {
