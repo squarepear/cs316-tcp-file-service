@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -85,29 +86,26 @@ public class Client {
     }
 
     private static void listFiles(InetSocketAddress address) {
-        System.out.println(Arrays.toString(sendRequest(address, ByteBuffer.wrap("L".getBytes()))));
+        byte[] bytes = sendRequest(address, ByteBuffer.wrap("L".getBytes()));
+        FileManager fileManager = new FileManager();
+
+        List<String> fileNames = fileManager.getFileNames(bytes);
+
+        System.out.println(fileNames);
     }
 
     private static byte[] sendRequest(InetSocketAddress address, ByteBuffer message) {
         try (SocketChannel channel = SocketChannel.open()) {
-            System.out.println("AAA");
-
             channel.connect(address);
             channel.write(message);
 
-            System.out.println("BBB");
-
-            ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+            ByteBuffer replyBuffer = ByteBuffer.allocate(4096);
             int bytesRead = channel.read(replyBuffer);
-
-            System.out.println("CCC");
 
             replyBuffer.flip();
 
             byte[] replyArray = new byte[bytesRead];
             replyBuffer.get(replyArray);
-
-            System.out.println("DDD");
 
             return replyArray;
         } catch (IOException e) {
