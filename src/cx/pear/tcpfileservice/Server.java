@@ -1,10 +1,18 @@
 package cx.pear.tcpfileservice;
 
+import java.io.ByteArrayOutputStream;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class Server {
     public static void main(String[] args) throws Exception{
@@ -33,10 +41,6 @@ public class Server {
                 String clientQuery = new String(clientQueryArray);
                 System.out.println(clientQuery);
 
-                ByteBuffer replyBuffer = ByteBuffer.wrap(clientQueryArray);
-                serveChannel.write(replyBuffer);
-
-                serveChannel.close();
                 //receiveMessage(port);
                 String command = clientQuery;
                 switch (command) {
@@ -80,8 +84,36 @@ public class Server {
         System.out.println("Delete");
     }
 
-    private static void listFiles(SocketChannel serveChannel, ByteBuffer request) {
-        System.out.println("List");
+    private static void listFiles(SocketChannel serveChannel, ByteBuffer request) throws Exception {
+        Set<String> files =listFilesUsingDirectoryStream("files");
+        StringBuilder fileList = new StringBuilder();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        for (String file : files) {
+
+            output.write(file.length());
+            output.write(file.getBytes());
+        }
+        byte[] out = output.toByteArray();
+        ByteBuffer replyBuffer = ByteBuffer.wrap(out);
+        serveChannel.write(replyBuffer);
+
+        serveChannel.close();
+    }
+
+
+
+    public static Set<String> listFilesUsingDirectoryStream(String dir) throws Exception {
+        Set<String> fileSet = new HashSet<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
+            for (Path path : stream) {
+                if (!Files.isDirectory(path)) {
+                    fileSet.add(path.getFileName()
+                            .toString());
+                }
+            }
+        }
+        return fileSet;
     }
 
 //    private static void receiveMessage(int port) throws Exception {
