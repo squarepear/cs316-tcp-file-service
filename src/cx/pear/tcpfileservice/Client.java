@@ -1,6 +1,5 @@
 package cx.pear.tcpfileservice;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -104,10 +103,36 @@ public class Client {
     }
 
     private static void renameFile(InetSocketAddress address) {
-        SocketChannel channel = sendRequest(address, ByteBuffer.wrap("U".getBytes()));
+        Scanner keyboard = new Scanner(System.in);
+
+        System.out.print("Enter name of file to rename: ");
+        String fileName = keyboard.nextLine().toLowerCase();
+        int fileNameLength = fileName.length();
+
+        System.out.print("Enter new name for the file: ");
+        String newFileName = keyboard.nextLine().toLowerCase();
+        int newFileNameLength = newFileName.length();
+
+        int requestLength = 2 + fileNameLength + newFileNameLength;
+        ByteBuffer request = ByteBuffer.allocate(requestLength);
+        request.put(("U" + fileName).getBytes()).put((byte) fileNameLength).put(newFileName.getBytes());
+
+        SocketChannel channel = sendRequest(address, request);
         byte[] bytes = readResponse(channel);
 
-        System.out.println(Arrays.toString(bytes));
+        char response = (char) bytes[0];
+
+        switch (response) {
+            case 'S':
+                System.out.println("File successfully renamed!");
+                break;
+            case 'F':
+                System.out.println("File not renamed...");
+                break;
+            default:
+                System.out.println("Server error...");
+                break;
+        }
     }
 
     private static void deleteFile(InetSocketAddress address) {
@@ -161,14 +186,18 @@ public class Client {
             ByteBuffer replyBuffer = ByteBuffer.allocate(4096);
             int bytesRead = channel.read(replyBuffer);
 
-            replyBuffer.flip();
-
-            byte[] replyArray = new byte[bytesRead];
-            replyBuffer.get(replyArray);
-
-            return replyArray;
+            return getBytesFromBuffer(replyBuffer, bytesRead);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static byte[] getBytesFromBuffer(ByteBuffer buffer, int length) {
+        buffer.flip();
+
+        byte[] replyArray = new byte[length];
+        buffer.get(replyArray);
+
+        return replyArray;
     }
 }
