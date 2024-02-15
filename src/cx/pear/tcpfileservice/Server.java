@@ -1,8 +1,12 @@
 package cx.pear.tcpfileservice;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.DirectoryStream;
@@ -15,6 +19,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class Server {
+    public Server() throws FileNotFoundException {
+    }
+
     public static void main(String[] args) throws Exception{
         if (args.length != 1) {
             System.out.println("WHAT DO YOU THINK YOU ARE DOING?");
@@ -42,21 +49,21 @@ public class Server {
                 System.out.println(clientQuery);
 
                 //receiveMessage(port);
-                String command = clientQuery;
+                char command = clientQuery.charAt(0);
                 switch (command) {
-                    case "C": // Create
+                    case 'C': // Create
                         uploadFile(serveChannel, request);
                         break;
-                    case "R": // Read
+                    case 'R': // Read
                         downloadFile(serveChannel, request);
                         break;
-                    case "U": // Update
+                    case 'U': // Update
                         renameFile(serveChannel, request);
                         break;
-                    case "D": // Delete
+                    case 'D': // Delete
                         deleteFile(serveChannel, request);
                         break;
-                    case "L": // List
+                    case 'L': // List
                         listFiles(serveChannel, request);
                         break;
                     default:
@@ -80,13 +87,24 @@ public class Server {
         System.out.println("Rename");
     }
 
-    private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) {
-        System.out.println("Delete");
+    private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) throws Exception {
+        Set<String> files =listFilesUsingDirectoryStream("files");
+
+        String fileString = new String(request.array());
+        StringBuilder fileName = new StringBuilder();
+        for (char letter : fileString.toCharArray()){
+            if(letter != 0){
+                fileName.append(letter);
+            }
+        }
+        fileName.deleteCharAt(0);
+        System.out.println(fileName);
+
+
     }
 
     private static void listFiles(SocketChannel serveChannel, ByteBuffer request) throws Exception {
         Set<String> files =listFilesUsingDirectoryStream("files");
-        StringBuilder fileList = new StringBuilder();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         for (String file : files) {
@@ -94,6 +112,7 @@ public class Server {
             output.write(file.length());
             output.write(file.getBytes());
         }
+
         byte[] out = output.toByteArray();
         ByteBuffer replyBuffer = ByteBuffer.wrap(out);
         serveChannel.write(replyBuffer);
@@ -126,4 +145,19 @@ public class Server {
 //        String clientMessage = new String(content);
 //        System.out.println(clientMessage);
 //    }
+
+
+//    public static void example() throws Exception {
+//        String fileName = "";
+//        FileInputStream fs = new FileInputStream("Files/" + fileName);
+//        FileChannel fc = fs.getChannel();
+//        ByteBuffer content = ByteBuffer.allocate(1024);
+//        while (fc.read(content) >= 0) {
+//            content.flip();
+//            serveChannel.write(content);
+//            content.clear();
+//        }
+//        serveChannel.shutdownOutput();
+//    }
+
 }
