@@ -1,6 +1,7 @@
 package cx.pear.tcpfileservice;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -91,8 +92,40 @@ public class Server {
         }
     }
 
-    private static void renameFile(SocketChannel serveChannel, ByteBuffer request) {
-        System.out.println("Rename");
+    private static void renameFile(SocketChannel serveChannel, ByteBuffer request) throws Exception{
+        System.out.println("We made it here");
+
+        String fileString = new String(request.array());
+        StringBuilder mixedFileName = new StringBuilder();
+        StringBuilder fileName = new StringBuilder();
+        for (char letter : fileString.toCharArray()){
+            if(letter != 0){
+                mixedFileName.append(letter);
+            }
+        }
+        mixedFileName.deleteCharAt(0);
+        int fileNameLength = mixedFileName.charAt(0);
+        mixedFileName.deleteCharAt(0);
+        for(int i =0; i<fileNameLength; i++){
+            fileName.append(mixedFileName.charAt(0));
+            mixedFileName.deleteCharAt(0);
+        }
+        Path newFilePath = Paths.get("files/" + mixedFileName);
+
+        byte[] out = null;
+        System.out.println(fileName);
+        Path filePath = Paths.get("files/" + fileName);
+
+        if(Files.exists(filePath)){
+            File file = new File(String.valueOf(filePath));
+            File newFileName = new File(newFilePath.toString());
+            if(file.renameTo(newFileName)){
+                out = "S".getBytes();
+            }
+            else{
+                out = "F".getBytes();
+            }
+            }
     }
 
     private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) throws Exception {
@@ -105,7 +138,7 @@ public class Server {
         }
         fileName.deleteCharAt(0);
         byte[] out = null;
-        if(Files.deleteIfExists(Paths.get("files/"+fileName.toString()))){
+        if(Files.deleteIfExists(Paths.get("files/"+ fileName))){
             out = "S".getBytes();
         }
         else{
