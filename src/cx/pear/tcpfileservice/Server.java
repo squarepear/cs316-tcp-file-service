@@ -2,8 +2,6 @@ package cx.pear.tcpfileservice;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -13,15 +11,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class Server {
-    public Server() throws FileNotFoundException {
-    }
-
     public static void main(String[] args) throws Exception{
         if (args.length != 1) {
             System.out.println("WHAT DO YOU THINK YOU ARE DOING?");
@@ -80,7 +73,21 @@ public class Server {
     }
 
     private static void downloadFile(SocketChannel serveChannel, ByteBuffer request) {
-        System.out.println("Download");
+        try {
+            FileInputStream fileStream = new FileInputStream("files/ab.cd");
+
+            FileChannel fileChannel = fileStream.getChannel();
+
+            ByteBuffer content = ByteBuffer.allocate(1024);
+            while (fileChannel.read(content) >= 0) {
+                content.flip();
+
+                serveChannel.write(content);
+                content.clear();
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     private static void renameFile(SocketChannel serveChannel, ByteBuffer request) {

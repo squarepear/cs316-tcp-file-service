@@ -8,7 +8,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -72,10 +71,28 @@ public class Client {
     }
 
     private static void uploadFile(InetSocketAddress address) {
-        SocketChannel channel = sendRequest(address, ByteBuffer.wrap("C".getBytes()));
-        byte[] bytes = readResponse(channel);
+        try {
+            System.out.print("Enter name of file to download: ");
 
-        System.out.println(Arrays.toString(bytes));
+            Scanner keyboard = new Scanner(System.in);
+            String fileName = keyboard.nextLine().toLowerCase();
+
+            SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("C" + fileName).getBytes()));
+            FileOutputStream fileStream = new FileOutputStream("files/" + fileName, true);
+
+            FileChannel fileChannel = fileStream.getChannel();
+
+            ByteBuffer content = ByteBuffer.allocate(1024);
+
+            while (channel.read(content) >= 0) {
+                content.flip();
+
+                fileChannel.write(content);
+                content.clear();
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     private static void downloadFile(InetSocketAddress address) {
