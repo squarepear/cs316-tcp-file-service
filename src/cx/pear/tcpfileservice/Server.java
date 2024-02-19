@@ -39,6 +39,7 @@ public class Server {
                 request.get(clientQueryArray);
 
                 String clientQuery = new String(clientQueryArray);
+                //TODO//
                 System.out.println(clientQuery);
 
                 //receiveMessage(port);
@@ -95,8 +96,6 @@ public class Server {
     }
 
     private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) throws Exception {
-        Set<String> files =listFilesUsingDirectoryStream("files");
-
         String fileString = new String(request.array());
         StringBuilder fileName = new StringBuilder();
         for (char letter : fileString.toCharArray()){
@@ -105,8 +104,17 @@ public class Server {
             }
         }
         fileName.deleteCharAt(0);
-        System.out.println(fileName);
+        byte[] out = null;
+        if(Files.deleteIfExists(Paths.get("files/"+fileName.toString()))){
+            out = "S".getBytes();
+        }
+        else{
+            out = "F".getBytes();
+        }
+        ByteBuffer replyBuffer = ByteBuffer.wrap(out);
+        serveChannel.write(replyBuffer);
 
+        serveChannel.close();
 
     }
 
