@@ -126,6 +126,12 @@ public class Server {
                 out = "F".getBytes();
             }
             }
+        assert out != null;
+        ByteBuffer replyBuffer = ByteBuffer.wrap(out);
+        serveChannel.write(replyBuffer);
+
+        serveChannel.close();
+
     }
 
     private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) throws Exception {
