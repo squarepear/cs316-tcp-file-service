@@ -114,6 +114,8 @@ public class Client {
                 fileChannel.write(content);
                 content.clear();
             }
+
+            fileStream.close();
         } catch (Exception e) {
             System.out.println(e);
         }

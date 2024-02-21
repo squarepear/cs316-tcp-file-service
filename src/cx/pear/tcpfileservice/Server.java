@@ -75,18 +75,30 @@ public class Server {
     }
 
     private static void downloadFile(SocketChannel serveChannel, ByteBuffer request) {
+        // Request format: "R<filename>"
+        // Response format: "<file content>"
+        String fileString = new String(request.array());
+        StringBuilder fileName = new StringBuilder();
+        for (char letter : fileString.toCharArray()){
+            if (letter == 0)
+                break;
+
+            fileName.append(letter);
+        }
+        fileName.deleteCharAt(0);
+
         try {
-            FileInputStream fileStream = new FileInputStream("files/ab.cd");
-
+            FileInputStream fileStream = new FileInputStream("files/" + fileName);
             FileChannel fileChannel = fileStream.getChannel();
-
             ByteBuffer content = ByteBuffer.allocate(1024);
+
             while (fileChannel.read(content) >= 0) {
                 content.flip();
-
                 serveChannel.write(content);
                 content.clear();
             }
+
+            fileStream.close();
         } catch (Exception e) {
             System.out.println(e);
         }
