@@ -3,6 +3,7 @@ package cx.pear.tcpfileservice;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -71,7 +72,46 @@ public class Server {
     }
 
     private static void uploadFile(SocketChannel serveChannel, ByteBuffer request) {
-        System.out.println("Upload");
+        String fileString = new String(request.array());
+        StringBuilder mixedFileName = new StringBuilder();
+        StringBuilder fileName = new StringBuilder();
+        for (char letter : fileString.toCharArray()){
+            if(letter != 0){
+                mixedFileName.append(letter);
+            }
+        }
+
+        mixedFileName.deleteCharAt(0);
+        int fileNameLength = mixedFileName.charAt(0);
+        mixedFileName.deleteCharAt(0);
+
+        for(int i =0; i<fileNameLength; i++){
+            fileName.append(mixedFileName.charAt(0));
+            mixedFileName.deleteCharAt(0);
+        }
+
+        try {
+            FileOutputStream fileStream = new FileOutputStream("files/" + fileName);
+            FileChannel fileChannel = fileStream.getChannel();
+
+            request.flip();
+
+            request.position(fileNameLength + 2);
+
+            fileChannel.write(request);
+
+            ByteBuffer content = ByteBuffer.allocate(1024);
+            while (serveChannel.read(content) >= 0) {
+                content.flip();
+
+                fileChannel.write(content);
+                content.clear();
+            }
+
+            fileStream.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     private static void downloadFile(SocketChannel serveChannel, ByteBuffer request) {
@@ -105,8 +145,6 @@ public class Server {
     }
 
     private static void renameFile(SocketChannel serveChannel, ByteBuffer request) throws Exception{
-        System.out.println("We made it here");
-
         String fileString = new String(request.array());
         StringBuilder mixedFileName = new StringBuilder();
         StringBuilder fileName = new StringBuilder();
@@ -125,7 +163,7 @@ public class Server {
         Path newFilePath = Paths.get("files/" + mixedFileName);
 
         String out = "F";
-        System.out.println(fileName);
+
         Path filePath = Paths.get("files/" + fileName);
 
         if(Files.exists(filePath)){
@@ -196,30 +234,4 @@ public class Server {
         }
         return fileSet;
     }
-
-//    private static void receiveMessage(int port) throws Exception {
-//        System.out.println("At least starting");
-//        DatagramSocket socket = new DatagramSocket(port);
-//        DatagramPacket clientRequest = new DatagramPacket(new byte[1024], 1024);
-//        socket.receive(clientRequest);
-//        System.out.println("Received");
-//        byte[] content = Arrays.copyOf(clientRequest.getData(), clientRequest.getLength());
-//        String clientMessage = new String(content);
-//        System.out.println(clientMessage);
-//    }
-
-
-//    public static void example() throws Exception {
-//        String fileName = "";
-//        FileInputStream fs = new FileInputStream("Files/" + fileName);
-//        FileChannel fc = fs.getChannel();
-//        ByteBuffer content = ByteBuffer.allocate(1024);
-//        while (fc.read(content) >= 0) {
-//            content.flip();
-//            serveChannel.write(content);
-//            content.clear();
-//        }
-//        serveChannel.shutdownOutput();
-//    }
-
 }

@@ -1,5 +1,6 @@
 package cx.pear.tcpfileservice;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,28 +72,32 @@ public class Client {
     }
 
     private static void uploadFile(InetSocketAddress address) {
+        System.out.println("Enter name of file to upload: ");
+        Scanner keyboard = new Scanner(System.in);
+        String fileName = keyboard.nextLine().toLowerCase();
+
         try {
-            System.out.print("Enter name of file to download: ");
-
-            Scanner keyboard = new Scanner(System.in);
-            String fileName = keyboard.nextLine().toLowerCase();
-
-            SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("C" + fileName).getBytes()));
-            FileOutputStream fileStream = new FileOutputStream("files/" + fileName, true);
-
+            FileInputStream fileStream = new FileInputStream("files/" + fileName);
             FileChannel fileChannel = fileStream.getChannel();
 
+            ByteBuffer request = ByteBuffer.allocate(1024);
+            request.put(("C" + (char) fileName.length() + fileName).getBytes());
+            request.flip();
+
+            SocketChannel channel = sendRequest(address, request);
+
             ByteBuffer content = ByteBuffer.allocate(1024);
-
-            while (channel.read(content) >= 0) {
+            while (fileChannel.read(content) >= 0) {
                 content.flip();
-
-                fileChannel.write(content);
+                channel.write(content);
                 content.clear();
             }
+
+            fileStream.close();
         } catch (Exception e) {
             System.out.println(e);
         }
+
     }
 
     private static void downloadFile(InetSocketAddress address) {
