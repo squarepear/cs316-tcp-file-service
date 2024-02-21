@@ -112,26 +112,22 @@ public class Server {
         }
         Path newFilePath = Paths.get("files/" + mixedFileName);
 
-        byte[] out = null;
+        String out = "F";
         System.out.println(fileName);
         Path filePath = Paths.get("files/" + fileName);
 
         if(Files.exists(filePath)){
             File file = new File(String.valueOf(filePath));
             File newFileName = new File(newFilePath.toString());
-            if(file.renameTo(newFileName)){
-                out = "S".getBytes();
-            }
-            else{
-                out = "F".getBytes();
-            }
-            }
-        assert out != null;
-        ByteBuffer replyBuffer = ByteBuffer.wrap(out);
+
+            if(file.renameTo(newFileName))
+                out = "S";
+        }
+
+        ByteBuffer replyBuffer = ByteBuffer.wrap(out.getBytes());
         serveChannel.write(replyBuffer);
 
         serveChannel.close();
-
     }
 
     private static void deleteFile(SocketChannel serveChannel, ByteBuffer request) throws Exception {

@@ -128,11 +128,9 @@ public class Client {
 
         System.out.print("Enter new name for the file: ");
         String newFileName = keyboard.nextLine().toLowerCase();
-        int newFileNameLength = newFileName.length();
 
-        int requestLength = 2 + fileNameLength + newFileNameLength;
-        ByteBuffer request = ByteBuffer.allocate(requestLength);
-        request.put(("U" + fileName).getBytes()).put((byte) fileNameLength).put(newFileName.getBytes());
+        String requestMessage = "U" + (char) fileNameLength + fileName + newFileName;
+        ByteBuffer request = ByteBuffer.wrap(requestMessage.getBytes());
 
         SocketChannel channel = sendRequest(address, request);
         byte[] bytes = readResponse(channel);
