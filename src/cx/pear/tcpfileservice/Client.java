@@ -77,7 +77,7 @@ public class Client {
         String fileName = keyboard.nextLine().toLowerCase();
 
         try {
-            FileInputStream fileStream = new FileInputStream("files/" + fileName);
+            FileInputStream fileStream = new FileInputStream("dl/" + fileName);
             FileChannel fileChannel = fileStream.getChannel();
 
             ByteBuffer request = ByteBuffer.allocate(1024);
@@ -108,7 +108,7 @@ public class Client {
             String fileName = keyboard.nextLine().toLowerCase();
 
             SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("R" + fileName).getBytes()));
-            FileOutputStream fileStream = new FileOutputStream("files/" + fileName, true);
+            FileOutputStream fileStream = new FileOutputStream("client_files/" + fileName, true);
 
             FileChannel fileChannel = fileStream.getChannel();
 

@@ -91,7 +91,7 @@ public class Server {
         }
 
         try {
-            FileOutputStream fileStream = new FileOutputStream("files/" + fileName);
+            FileOutputStream fileStream = new FileOutputStream("server_files/" + fileName);
             FileChannel fileChannel = fileStream.getChannel();
 
             request.flip();
