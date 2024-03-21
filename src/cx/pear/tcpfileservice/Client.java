@@ -11,6 +11,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Client {
     public static void main(String[] args) throws UnknownHostException {
@@ -28,9 +30,13 @@ public class Client {
             return;
         }
 
-        String command = "";
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        while (!command.equals("quit")) {
+        System.out.println("Welcome to the File Service Client!");
+
+        String command;
+
+        do {
             printHelp();
 
             Scanner keyboard = new Scanner(System.in);
@@ -38,10 +44,10 @@ public class Client {
 
             switch (command) {
                 case "upload":
-                    uploadFile(serverAddress);
+                    uploadFile(serverAddress, executor);
                     continue;
                 case "download":
-                    downloadFile(serverAddress);
+                    downloadFile(serverAddress, executor);
                     continue;
                 case "rename":
                     renameFile(serverAddress);
@@ -57,7 +63,7 @@ public class Client {
             }
 
             System.out.println("Invalid Command!");
-        }
+        } while (!command.equals("quit"));
 
         System.out.println("Program exiting");
     }
@@ -71,59 +77,62 @@ public class Client {
         System.out.println("Quit");
     }
 
-    private static void uploadFile(InetSocketAddress address) {
+    private static void uploadFile(InetSocketAddress address, ExecutorService executor) {
         System.out.println("Enter name of file to upload: ");
         Scanner keyboard = new Scanner(System.in);
         String fileName = keyboard.nextLine().toLowerCase();
 
-        try {
-            FileInputStream fileStream = new FileInputStream("dl/" + fileName);
-            FileChannel fileChannel = fileStream.getChannel();
+        executor.submit(() -> {
+            try {
+                FileInputStream fileStream = new FileInputStream("dl/" + fileName);
+                FileChannel fileChannel = fileStream.getChannel();
 
-            ByteBuffer request = ByteBuffer.allocate(1024);
-            request.put(("C" + (char) fileName.length() + fileName).getBytes());
-            request.flip();
+                ByteBuffer request = ByteBuffer.allocate(1024);
+                request.put(("C" + (char) fileName.length() + fileName).getBytes());
+                request.flip();
 
-            SocketChannel channel = sendRequest(address, request);
+                SocketChannel channel = sendRequest(address, request);
 
-            ByteBuffer content = ByteBuffer.allocate(1024);
-            while (fileChannel.read(content) >= 0) {
-                content.flip();
-                channel.write(content);
-                content.clear();
+                ByteBuffer content = ByteBuffer.allocate(1024);
+                while (fileChannel.read(content) >= 0) {
+                    content.flip();
+                    channel.write(content);
+                    content.clear();
+                }
+
+                fileStream.close();
+            } catch (Exception e) {
+                System.out.println(e);
             }
-
-            fileStream.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-
+        });
     }
 
-    private static void downloadFile(InetSocketAddress address) {
-        try {
-            System.out.print("Enter name of file to download: ");
+    private static void downloadFile(InetSocketAddress address, ExecutorService executor) {
+        System.out.print("Enter name of file to download: ");
 
-            Scanner keyboard = new Scanner(System.in);
-            String fileName = keyboard.nextLine().toLowerCase();
+        Scanner keyboard = new Scanner(System.in);
+        String fileName = keyboard.nextLine().toLowerCase();
 
-            SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("R" + fileName).getBytes()));
-            FileOutputStream fileStream = new FileOutputStream("client_files/" + fileName, true);
+        executor.submit(() -> {
+            try {
+                SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("R" + fileName).getBytes()));
+                FileOutputStream fileStream = new FileOutputStream("client_files/" + fileName, true);
 
-            FileChannel fileChannel = fileStream.getChannel();
+                FileChannel fileChannel = fileStream.getChannel();
 
-            ByteBuffer content = ByteBuffer.allocate(1024);
-            while (channel.read(content) >= 0) {
-                content.flip();
+                ByteBuffer content = ByteBuffer.allocate(1024);
+                while (channel.read(content) >= 0) {
+                    content.flip();
 
-                fileChannel.write(content);
-                content.clear();
+                    fileChannel.write(content);
+                    content.clear();
+                }
+
+                fileStream.close();
+            } catch (Exception e) {
+                System.out.println(e);
             }
-
-            fileStream.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        });
     }
 
     private static void renameFile(InetSocketAddress address) {
