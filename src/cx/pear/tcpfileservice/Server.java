@@ -14,7 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     public static void main(String[] args) throws Exception{
@@ -25,50 +28,68 @@ public class Server {
 
         int port = Integer.parseInt(args[0]);
 
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
         try {
             ServerSocketChannel welcomeChannel = ServerSocketChannel.open();
             welcomeChannel.socket().bind(new InetSocketAddress(port));
 
-            while (welcomeChannel.isOpen()) {
-                SocketChannel serveChannel = welcomeChannel.accept();
+            for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+                executor.submit(() -> {
+                    while (welcomeChannel.isOpen()) {
+                        try {
+                            SocketChannel serveChannel = welcomeChannel.accept();
 
-                ByteBuffer request = ByteBuffer.allocate(1024);
-                int bytesRead = serveChannel.read(request);
+                            ByteBuffer request = ByteBuffer.allocate(1024);
+                            int bytesRead = serveChannel.read(request);
 
-                request.flip();
+                            request.flip();
 
-                byte [] clientQueryArray = new byte[bytesRead];
-                request.get(clientQueryArray);
+                            byte[] clientQueryArray = new byte[bytesRead];
+                            request.get(clientQueryArray);
 
-                String clientQuery = new String(clientQueryArray);
-                //TODO//
-                System.out.println(clientQuery);
+                            String clientQuery = new String(clientQueryArray);
+                            //TODO//
+                            System.out.println(clientQuery);
 
-                //receiveMessage(port);
-                char command = clientQuery.charAt(0);
-                switch (command) {
-                    case 'C': // Create
-                        uploadFile(serveChannel, request);
-                        break;
-                    case 'R': // Read
-                        downloadFile(serveChannel, request);
-                        break;
-                    case 'U': // Update
-                        renameFile(serveChannel, request);
-                        break;
-                    case 'D': // Delete
-                        deleteFile(serveChannel, request);
-                        break;
-                    case 'L': // List
-                        listFiles(serveChannel, request);
-                        break;
-                    default:
-                        System.out.println("AAAAAAHHHHHH I DONT KNOW WHAT THAT MEANS!");
-                }
+                            //receiveMessage(port);
+                            char command = clientQuery.charAt(0);
+                            switch (command) {
+                                case 'C': // Create
+                                    uploadFile(serveChannel, request);
+                                    break;
+                                case 'R': // Read
+                                    downloadFile(serveChannel, request);
+                                    break;
+                                case 'U': // Update
+                                    renameFile(serveChannel, request);
+                                    break;
+                                case 'D': // Delete
+                                    deleteFile(serveChannel, request);
+                                    break;
+                                case 'L': // List
+                                    listFiles(serveChannel, request);
+                                    break;
+                                default:
+                                    System.out.println("AAAAAAHHHHHH I DONT KNOW WHAT THAT MEANS!");
+                            }
 
-                serveChannel.close();
+                            serveChannel.close();
+                        } catch (Exception ignored) {
+                        }
+                    }
+                });
             }
         } catch (Exception ignored) {}
+
+        String command;
+
+        do {
+            Scanner keyboard = new Scanner(System.in);
+            command = keyboard.nextLine().toLowerCase();
+        } while (!command.equals("quit"));
+
+        executor.shutdownNow();
     }
 
     private static void uploadFile(SocketChannel serveChannel, ByteBuffer request) {

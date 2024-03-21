@@ -84,7 +84,7 @@ public class Client {
 
         executor.submit(() -> {
             try {
-                FileInputStream fileStream = new FileInputStream("dl/" + fileName);
+                FileInputStream fileStream = new FileInputStream("client_files/" + fileName);
                 FileChannel fileChannel = fileStream.getChannel();
 
                 ByteBuffer request = ByteBuffer.allocate(1024);
