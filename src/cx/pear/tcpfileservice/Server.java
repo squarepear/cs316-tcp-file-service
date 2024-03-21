@@ -128,7 +128,7 @@ public class Server {
         fileName.deleteCharAt(0);
 
         try {
-            FileInputStream fileStream = new FileInputStream("files/" + fileName);
+            FileInputStream fileStream = new FileInputStream("server_files/" + fileName);
             FileChannel fileChannel = fileStream.getChannel();
             ByteBuffer content = ByteBuffer.allocate(1024);
 
@@ -160,11 +160,11 @@ public class Server {
             fileName.append(mixedFileName.charAt(0));
             mixedFileName.deleteCharAt(0);
         }
-        Path newFilePath = Paths.get("files/" + mixedFileName);
+        Path newFilePath = Paths.get("server_files/" + mixedFileName);
 
         String out = "F";
 
-        Path filePath = Paths.get("files/" + fileName);
+        Path filePath = Paths.get("server_files/" + fileName);
 
         if(Files.exists(filePath)){
             File file = new File(String.valueOf(filePath));
@@ -190,7 +190,7 @@ public class Server {
         }
         fileName.deleteCharAt(0);
         byte[] out = null;
-        if(Files.deleteIfExists(Paths.get("files/"+ fileName))){
+        if(Files.deleteIfExists(Paths.get("server_files/"+ fileName))){
             out = "S".getBytes();
         }
         else{
@@ -204,7 +204,7 @@ public class Server {
     }
 
     private static void listFiles(SocketChannel serveChannel, ByteBuffer request) throws Exception {
-        Set<String> files =listFilesUsingDirectoryStream("files");
+        Set<String> files =listFilesUsingDirectoryStream("server_files/");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         for (String file : files) {
