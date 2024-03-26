@@ -112,7 +112,7 @@ public class Server {
         }
 
         try {
-            FileOutputStream fileStream = new FileOutputStream("server_files/" + fileName);
+            FileOutputStream fileStream = new FileOutputStream(Paths.get("server_files", fileName.toString()).toString());
             FileChannel fileChannel = fileStream.getChannel();
 
             request.flip();
@@ -149,7 +149,7 @@ public class Server {
         fileName.deleteCharAt(0);
 
         try {
-            FileInputStream fileStream = new FileInputStream("server_files/" + fileName);
+            FileInputStream fileStream = new FileInputStream(Paths.get("server_files", fileName.toString()).toString());
             FileChannel fileChannel = fileStream.getChannel();
             ByteBuffer content = ByteBuffer.allocate(1024);
 
@@ -181,11 +181,11 @@ public class Server {
             fileName.append(mixedFileName.charAt(0));
             mixedFileName.deleteCharAt(0);
         }
-        Path newFilePath = Paths.get("server_files/" + mixedFileName);
+        Path newFilePath = Paths.get(Paths.get("server_files", mixedFileName.toString()).toString());
 
         String out = "F";
 
-        Path filePath = Paths.get("server_files/" + fileName);
+        Path filePath = Paths.get(Paths.get("server_files", fileName.toString()).toString());
 
         if(Files.exists(filePath)){
             File file = new File(String.valueOf(filePath));
@@ -211,7 +211,7 @@ public class Server {
         }
         fileName.deleteCharAt(0);
         byte[] out = null;
-        if(Files.deleteIfExists(Paths.get("server_files/"+ fileName))){
+        if(Files.deleteIfExists(Paths.get(Paths.get("server_files", fileName.toString()).toString()))){
             out = "S".getBytes();
         }
         else{
@@ -225,7 +225,7 @@ public class Server {
     }
 
     private static void listFiles(SocketChannel serveChannel, ByteBuffer request) throws Exception {
-        Set<String> files =listFilesUsingDirectoryStream("server_files/");
+        Set<String> files =listFilesUsingDirectoryStream("server_files");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         for (String file : files) {

@@ -9,6 +9,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -84,7 +85,7 @@ public class Client {
 
         executor.submit(() -> {
             try {
-                FileInputStream fileStream = new FileInputStream("client_files/" + fileName);
+                FileInputStream fileStream = new FileInputStream(Paths.get("client_files", fileName).toString());
                 FileChannel fileChannel = fileStream.getChannel();
 
                 ByteBuffer request = ByteBuffer.allocate(1024);
@@ -116,7 +117,7 @@ public class Client {
         executor.submit(() -> {
             try {
                 SocketChannel channel = sendRequest(address, ByteBuffer.wrap(("R" + fileName).getBytes()));
-                FileOutputStream fileStream = new FileOutputStream("client_files/" + fileName, true);
+                FileOutputStream fileStream = new FileOutputStream(Paths.get("client_files", fileName).toString(), true);
 
                 FileChannel fileChannel = fileStream.getChannel();
 
