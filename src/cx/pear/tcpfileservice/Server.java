@@ -1,9 +1,6 @@
 package cx.pear.tcpfileservice;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -18,9 +15,10 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Server {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.out.println("WHAT DO YOU THINK YOU ARE DOING?");
             return;
@@ -30,18 +28,19 @@ public class Server {
 
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        try {
-            ServerSocketChannel welcomeChannel = ServerSocketChannel.open();
-            welcomeChannel.socket().bind(new InetSocketAddress(port));
+        ServerSocketChannel welcomeChannel = ServerSocketChannel.open();
+        welcomeChannel.socket().bind(new InetSocketAddress(port));
 
-            for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-                executor.submit(() -> {
-                    while (welcomeChannel.isOpen()) {
+        Future<?> serverListenTask = executor.submit(() -> {
+            try {
+                while (welcomeChannel.isOpen()) {
+                    SocketChannel serveChannel = welcomeChannel.accept();
+
+                    executor.submit(() -> {
                         try {
-                            SocketChannel serveChannel = welcomeChannel.accept();
-
                             ByteBuffer request = ByteBuffer.allocate(1024);
-                            int bytesRead = serveChannel.read(request);
+                            int bytesRead = 0;
+                            bytesRead = serveChannel.read(request);
 
                             request.flip();
 
@@ -49,10 +48,8 @@ public class Server {
                             request.get(clientQueryArray);
 
                             String clientQuery = new String(clientQueryArray);
-                            //TODO//
                             System.out.println(clientQuery);
 
-                            //receiveMessage(port);
                             char command = clientQuery.charAt(0);
                             switch (command) {
                                 case 'C': // Create
@@ -73,14 +70,14 @@ public class Server {
                                 default:
                                     System.out.println("AAAAAAHHHHHH I DONT KNOW WHAT THAT MEANS!");
                             }
-
-                            serveChannel.close();
-                        } catch (Exception ignored) {
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
-                    }
-                });
+                    });
+                }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {}
+        });
 
         String command;
 
@@ -89,7 +86,8 @@ public class Server {
             command = keyboard.nextLine().toLowerCase();
         } while (!command.equals("quit"));
 
-        executor.shutdownNow();
+        serverListenTask.cancel(true);
+        executor.shutdown();
     }
 
     private static void uploadFile(SocketChannel serveChannel, ByteBuffer request) {
